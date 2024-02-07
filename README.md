@@ -4,7 +4,8 @@
 Savunma Sanayi’de İHA ve İKA araçları iki farklı araç olarak üretiliyor. Biz iki aracın dezavantajlarını gidererek bu araçların yaptığı işi tek bir araçla yapmayı hedefliyoruz.
 
 ### Donanım Şeması:
-![Pegasus_Elektronik_Şema](https://github.com/ArbakSavunma/Gokar-Pegasus/assets/153490274/abd89633-17f8-4963-8be2-2b88452eff4e)
+![Pegasus_Elektronik_Şema](https://github.com/ArbakSavunma/Gokar-Pegasus/assets/153490274/5ee254fe-b223-46fa-91d7-7d86e29fe539)
+
 
 ### Kodların Açıklaması:
 Gökar Pegasus aracının çalışması için 5 işlemin gerçekleştirilmesi gerekmektedir.
