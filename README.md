@@ -26,11 +26,11 @@ https://github.com/EnesTayfun/signal_capture_stm32_nucleol476rg/tree/main
 
 Arduino IDE:
 
- *transmitter_read 
+ - transmitter_read 
  
  STM32 CUBE IDE:
  
- *mikrozone_readData
+ - mikrozone_readData
 
 #### Fırçasız DC Motorların Sürülmesi:
 Fırçasız dc motorların kontrolü hangi sürücü (ESC) veya mikrodenetleyicinin kullanırsak kullanalım sabit bir mantık içerir. Servo motorların kontrolündeki gibi 20ms lik periyoda sahip darbe genişlik sinyallerinin (PWM) 1ms – 2ms arasındaki zaman dilimlerini maksimum ve minimum dutycycle olarak kullanabiliriz. Timer 2, Timer 4 ve Timer 8 zamanlayıcı pinlerini; pervane motorları, tekerlek motorları ve eklem servo motorlarının kontrolü için kullanıldı. Test edildikten sonra ana sürüş koduna eklendi. Çalışma için yararlandığım kaynağın linkini aşağıya bıraktım.
@@ -39,11 +39,11 @@ https://controllerstech.com/how-to-interface-bldc-motor-with-stm32/
 
 Arduino IDE:
 
- *mootor_kalibre
+ - mootor_kalibre
  
 STM32 CUBE IDE:
 
- *pwm_motorsurme3
+ - pwm_motorsurme3
 
 #### IMU sensöründen konum değişiminin ağılanması:
 Gökar Pegasus’un PID kontrol algoritmasında ana geri dönüt sinyali IMU sensörüdür. “Testlerde ağırlıklı MPU6050 IMU sensörü kullanıldı. 3 eksen ivme ölçer, 3 eksen de gyrometreden veri aktaran MPU6050 ile konum değişimini hesaplıyoruz. 6 eksen veriden açı değişimlerini hesaplamak için algoritmaya bazı filtreler uygulanmaktadır. Düşük geçirgen filtre, yüksek geçirgen filtre, madwick fitresi ve kalman filtreleri arasından düşük geçirgen filtreyi seçtik. Sensör kullanımı için yararlandığım kaynakların linklerini aşağıya bıraktım.
@@ -54,11 +54,11 @@ https://github.com/EnesTayfun/mpu6050_library
 
 Arduino IDE:
 
- *IMU
+ - IMU
 
 STM32 CUBE IDE:
 
- *IMU_MPU6050
+ - IMU_MPU6050
 
 #### PID algoritmasında motor kuvvetlerinin hesaplanması
 Pegasus aracının kullanıcı komutlarını göre stabil ve doğru uygulaması için her bir motorun dönüş hızı PID algoritması ile kontrol edilmektedir. Kumandadan gelen komutlar ile IMU sensöründen gelen anlık konum verisinin farkını hata sinyali olarak kullanılmakta. Hata verisini PID algoritması kullanılarak her bir motor için ayrı PWM sinyali hesaplatıyoruz. PID sabitlerinin belirlenmesi de aracın ağırlık dengesi ve montajı tamamlandıktan sonra deneme yanılma yolu ile test edilip belirlenmektedir. 
@@ -74,18 +74,18 @@ Projenin testleri için hem Arduino Mega hem de STM32F4 Discovery kartlarına al
 
 Arduino IDE:
 
- *pegasus_multi_driver
+ - pegasus_multi_driver
  
- *pegasus_multi_driver_model2
+ - pegasus_multi_driver_model2
  
- *pegasus_multi_driver_model3
+ - pegasus_multi_driver_model3
 
 STM32 CUBE IDE:
  
- *pegasus_test_vol1
+ - pegasus_test_vol1
  
- *pegasus_test_vol2
+ - pegasus_test_vol2
  
- *pegasus_test_vol3
+ - pegasus_test_vol3
  
- *pegasus_test_vol4
+ - pegasus_test_vol4
