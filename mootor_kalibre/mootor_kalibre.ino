@@ -10,7 +10,7 @@ void setup() {
   ESC2.attach(5,1000,2000);
   ESC3.attach(9,1000,2000);
   ESC4.attach(10,1000,2000); 
-  Serial.begin(115200);
+  Serial.begin(9600);
   ESC1.write(180);
   ESC2.write(180);
   ESC3.write(180);
@@ -34,9 +34,20 @@ void loop() {
   Serial.println(potValue);
   
 //  ESC.write(potValue);// Send the signal to the ESC
-    ESC1.write(80);
+  ESC1.write(30);
+  ESC2.write(30);
+  ESC3.write(30);
+  ESC4.write(30);
+  delay(4000);
+  ESC1.write(60);
+  ESC2.write(60);
+  ESC3.write(60);
+  ESC4.write(60);
+  delay(4000);
+  ESC1.write(90);
   ESC2.write(90);
   ESC3.write(90);
   ESC4.write(90);
-  delay(40);
+  delay(4000);
+  
 }
