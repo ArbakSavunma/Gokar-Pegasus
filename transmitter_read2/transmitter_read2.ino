@@ -41,4 +41,5 @@ void loop() {
     Serial.print(" , ");
     Serial.print(throttle);    
     Serial.println(" ");
+    Serial.println(receiver_values[5]);
 }

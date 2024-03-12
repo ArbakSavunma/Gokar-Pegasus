@@ -12,18 +12,18 @@
 #define lm35 A8
 #define echo 39
 #define triq 41
-#define KP_mes 0.50
-#define KI_mes 0.00
-#define KD_mes 200.00
-#define KP_roll 0.50
+#define KP_mes 0.10
+#define KI_mes 0.0
+#define KD_mes 75.00
+#define KP_roll 0.10
 #define KI_roll 0.00
-#define KD_roll 200.00
-#define KP_pitch 0.50
+#define KD_roll 75.00
+#define KP_pitch 0.10
 #define KI_pitch 0.00
-#define KD_pitch 200.00
-#define KP_yaw 0.50
+#define KD_pitch 75.00
+#define KP_yaw 0.10
 #define KI_yaw 0.00
-#define KD_yaw 200.00
+#define KD_yaw 75.00
 #define IMU_COMMUNICATION_TIMEOUT 900
 MPU6050 mpu;
 Servo ESC1, ESC2, ESC3, ESC4;
@@ -58,7 +58,7 @@ int servo_val1=180, servo_val2= 0, servo_val3= 180, servo_val4= 0;
 long int throttle=0, prevyaw=0, prevpitch=0, prevroll=0;
 float mesafe, sure, sicalik = 0;
 double roll_pid_i, roll_last_error, roll_control_signal, pitch_pid_i, pitch_last_error, pitch_control_signal, yaw_pid_i, yaw_last_error, yaw_control_signal, mes_pid_i, mes_last_error, mes_control_signal;
-int motpower1=0, motpower2=0, motpower3=0, motpower4=0;  
+int motpower1=0, motpower2=0, motpower3=0, motpower4=0, motpower5=0, motpower6=0;  
 
 void mot_calib_setup() {
   Serial.begin(9600);
@@ -66,9 +66,9 @@ void mot_calib_setup() {
   pinMode(echo,INPUT);
   pinMode(thermalError,INPUT);
   pinMode(chargeError,INPUT);
-  servo1.attach(2,1000,2000);
-  servo2.attach(3,1000,2000);
-  servo3.attach(4,1000,2000);
+  servo1.attach(3,1000,2000);
+  servo2.attach(4,1000,2000);
+  servo3.attach(5,1000,2000);
   servo4.attach(10,1000,2000);
   ESC1.attach(6,1000,2000);
   ESC2.attach(7,1000,2000);
@@ -98,6 +98,7 @@ void mot_calib_setup() {
   ontek2.write(0);
   arkatek.write(0);
   delay(2000);
+  
   ontek1.write(85);
   ontek2.write(85);
   arkatek.write(85);
@@ -129,17 +130,17 @@ long int rec_ver_transform() {
     else if(prevroll<-20) prevroll=-20;
     if(receiver_values[5]>1500){
       throttle=map(rec[2],10,200,0,180);
-      if(throttle<10) throttle=0; if(throttle>180) throttle=180;
+      if(throttle>180) throttle=180;
     }
     else {
       if(prevpitch>3){
         throttle=map(rec[2],10,200,85,180);
-        if(throttle<110) throttle=90; if(throttle>180) throttle=180;
+        if(throttle<85) throttle=85; if(throttle>180) throttle=180;
         Serial.println(rec[2]);
       }
       else if (prevpitch<-3) {
         throttle=map(rec[2],10,200,0,85);
-        if(throttle<20) throttle=0; if(throttle>90) throttle=90;
+        if(throttle<0) throttle=0; if(throttle>85) throttle=85;
         Serial.println(rec[2]);
       }
       else {
@@ -347,6 +348,9 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
   motpower1 = throttle + mes_control_signal - roll_control_signal - yaw_control_signal + pitch_control_signal;
   if(motpower1<0) motpower1=0;
   if(motpower1>180) motpower1=180;
+  //motpower1 = map(motpower1,0,180,85,180);
+  //if(motpower1<85) motpower1=85;
+  //if(motpower1>180) motpower1=180;
   motpower2 = throttle + mes_control_signal + roll_control_signal + yaw_control_signal + pitch_control_signal;
   if(motpower2<0) motpower2=0;
   if(motpower2>180) motpower2=180;
@@ -356,9 +360,11 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
   motpower4 = throttle + mes_control_signal + roll_control_signal - yaw_control_signal - pitch_control_signal;
   if(motpower4<0) motpower4=0;
   if(motpower4>180) motpower4=180;
-  if(throttle<20){
+  if(throttle<10){
     motpower1=0; motpower2=0; motpower3=0; motpower4=0;
   }
+  if(motpower1>50) motpower1=50; if(motpower2>50) motpower2=50;  if(motpower3>50) motpower3=50; if(motpower4>50) motpower4=50;
+
   Serial.print("mot1:");
   Serial.print(motpower1);
   Serial.println(" ");
@@ -382,8 +388,8 @@ void rightleftturning(uint32_t yawturn) {
 			uint32_t now= millis();
 			if(now-lastmillis>incdelay) {
 				lastmillis=now;
-				motpower1=throttle+3;
-				motpower2=throttle-3;
+				motpower5=throttle+3;
+				motpower6=throttle-3;
 				
         Serial.print("mot1:");
         Serial.print(motpower1);
@@ -402,14 +408,14 @@ void rightleftturning(uint32_t yawturn) {
 			uint32_t now= millis();
 			if(now-lastmillis>incdelay) {
 				lastmillis=now;
-				motpower2=throttle+3;
-				motpower1=throttle-3;
+				motpower5=throttle+3;
+				motpower6=throttle-3;
 				
-        Serial.print("mot1:");
-        Serial.print(motpower1);
+        Serial.print("mot5:");
+        Serial.print(motpower5);
         Serial.println(" ");
-        Serial.print("mot2:");
-        Serial.print(motpower2);
+        Serial.print("mot6:");
+        Serial.print(motpower6);
         Serial.println(" ");
 			}
 		}
@@ -422,9 +428,9 @@ void landdrivecontrol(float prYaw, struct IMU_Values imu_values){
 		double yawError = prYaw - imu_values.CurrentOrientation.YawAngle;
 		yaw_control_signal =  getControlSignal(yawError, KP_yaw, KI_yaw, KD_yaw, yaw_pid_i, yaw_last_error, imu_values.DeltaTime);
 		yaw_last_error= yawError;
-		motpower1= throttle-yaw_control_signal;
+		motpower5= throttle-yaw_control_signal;
 		
-		motpower2= throttle+yaw_control_signal;
+		motpower6= throttle+yaw_control_signal;
 		
     /*Serial.print("mot1:");
     Serial.print(motpower1);
@@ -432,8 +438,7 @@ void landdrivecontrol(float prYaw, struct IMU_Values imu_values){
     Serial.print("mot2:");
     Serial.print(motpower2);
     Serial.println(" "); */
-		motpower3= throttle;
-		motpower4= throttle;
+		
 	}
 }
 
@@ -441,18 +446,18 @@ void mods(long int kademe, struct IMU_Values imu_values) {
 
   rec_ver_transform();
   errorstate(imu_values.Error);
-   mesafe_yer();
+  mesafe_yer();
   if (kademe<1200) {
     
    Serial.println("*******MOD1********");
     
     calculateMotorPowers(100,mesafe,0,0,0, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
   }
-  else if(receiver_values[4]<1700 && receiver_values[4]>1200) {
+  else if(kademe<1700 && kademe>1200) {
     Serial.println("*******MOD2********");
     calculateMotorPowers(100,mesafe,prevroll,-1 * prevpitch,-1 * prevyaw, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
   }
-  else if(receiver_values[4]>1700) {
+  else if(kademe>1700) {
     Serial.println("*******MOD3********");
     calculateMotorPowers(0,0,prevroll,-1 * prevpitch,-1 * prevyaw, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
   }
@@ -485,12 +490,16 @@ float mesafe_yer() {
 
 void setup(){
   initializeIMU();
+  delay(2000);
   mot_calib_setup();
   if(digitalRead(thermalError)==1 || digitalRead(chargeError)==1) {
-    ESC1.write(0);
+    ESC1.write(85);
     ESC2.write(0);
     ESC3.write(0);
     ESC4.write(0);
+    ontek1.write(85);
+    ontek2.write(85);
+    arkatek.write(85);
     if(digitalRead(thermalError)==1) {
       Serial.println("Batarya cok isinmis sistemi kapatin!");
     }
@@ -524,23 +533,23 @@ void loop() {
     }
   }
   else {
-    if( receiver_values[5]>1600) {
+    if( receiver_values[5]>1500) {
         Serial.println("Uçuşa geçildi");
         
           ontek1.write(85);
           ontek2.write(85);
           arkatek.write(85);
-          servo1.write(30);
-          servo2.write(150);
-          servo3.write(30);
-          servo4.write(150);
+          servo1.write(0);
+          servo2.write(180);
+          servo3.write(0);
+          servo4.write(180);
         
            
         mods(receiver_values[4],imuValues);
     }
     else {
       Serial.println("kara sürüşünde");
-      
+
           
           ESC1.write(0);
           ESC2.write(0);
@@ -564,8 +573,8 @@ void loop() {
           ESC3.write(0);
           ESC4.write(0);
           
-          ontek1.write(motpower1);
-          ontek2.write(motpower2);
+          ontek1.write(motpower5);
+          ontek2.write(motpower6);
           arkatek.write(throttle);
         }
         else if(prevpitch<-3){ 
@@ -576,14 +585,14 @@ void loop() {
           ESC2.write(0);
           ESC3.write(0);
           ESC4.write(0);
-          Serial.print("mot1:");
-          Serial.print(85 - motpower1);
+          Serial.print("mot5:");
+          Serial.print(85 - motpower5);
           Serial.println(" ");
-          Serial.print("mot2:");
-          Serial.print(85 - motpower2);
+          Serial.print("mot6:");
+          Serial.print(85 - motpower6);
           Serial.println(" ");
-          ontek1.write(85 - motpower1);
-          ontek2.write(85 - motpower2);
+          ontek1.write(85 - motpower5);
+          ontek2.write(85 - motpower6);
           arkatek.write(85 - throttle);
         }
         else {
@@ -601,8 +610,8 @@ void loop() {
           ESC3.write(0);
           ESC4.write(0);
           
-          ontek1.write(motpower1);
-          ontek2.write(motpower2);
+          ontek1.write(motpower5);
+          ontek2.write(motpower6);
           arkatek.write(throttle);
         }
         else if(prevpitch<-3){
@@ -612,8 +621,8 @@ void loop() {
           ESC3.write(0);
           ESC4.write(0);
           
-          ontek1.write(85 - motpower1);
-          ontek2.write(85 - motpower2);
+          ontek1.write(85 - motpower5);
+          ontek2.write(85 - motpower6);
           arkatek.write(85 - throttle);
         }
         else {
