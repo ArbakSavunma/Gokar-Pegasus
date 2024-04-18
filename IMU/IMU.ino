@@ -48,13 +48,13 @@ void initializeIMU() {
   devStatus = mpu.dmpInitialize();
 
   
-  mpu.setXAccelOffset(-560.00000);
-  mpu.setYAccelOffset(-2681.00000);
-  mpu.setZAccelOffset(1680.00000);
-  mpu.setXGyroOffset(35);
-  mpu.setYGyroOffset(75.00000);
-  mpu.setZGyroOffset(-39.00000);
-//-732.00000,  1261.00000, 1332.00000, 77.00000, -37.00000,  15.00000
+  mpu.setXAccelOffset(1356.00000);
+  mpu.setYAccelOffset(533.00000);
+  mpu.setZAccelOffset(1702.00000);
+  mpu.setXGyroOffset(48);
+  mpu.setYGyroOffset(-11.00000);
+  mpu.setZGyroOffset(25.00000);
+//1356.00000,	533.00000,	1702.00000,	48.00000,	-11.00000,	25.00000
 //-1012.00000,  1285.00000, 1322.00000, 76.00000, -36.00000,  14.00000
 //-560.00000,  -2681.00000,  1680.00000, 35.00000, 75.00000, -39.00000
 

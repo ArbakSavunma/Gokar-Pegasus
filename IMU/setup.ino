@@ -15,7 +15,7 @@ long int throttle=0, prevyaw=0, prevpitch=0, prevroll=0, en1=0, en2=0;
 
 void setup(){
   initializeIMU();
-  Serial.begin(115200);
+  Serial.begin(9600);
   servo1.attach(2,1000,2000);
   servo2.attach(3,1000,2000);
   servo3.attach(4,1000,2000);
@@ -49,13 +49,13 @@ void loop() {
   struct Orientation o = getIMUOrientation();
   for(int i=0; i<6; i++) {
     receiver_values[i]=pulseIn (receiver_pins[i], HIGH, 25000);
-    Serial.print("CH");
+    /*Serial.print("CH");
     Serial.print(i);
     Serial.print(" : ");
     Serial.print(receiver_values[i]);
-    Serial.print(",\t");
+    Serial.print(",\t");*/
   }
-  Serial.println(" ");
+  //Serial.println(" ");
   
   if( receiver_values[5]>1500) {
     
@@ -75,19 +75,19 @@ void loop() {
     prevpitch=map(receiver_values[1],-3,196,0,180);
     prevroll=map(receiver_values[3],-21,179,0,180);
     for(int i=0; i<6; i++) {
-      Serial.print("CH");
+     /* Serial.print("CH");
       Serial.print(i);
       Serial.print(" : ");
       Serial.print(receiver_values[i]);
-      Serial.print(",\t");
+      Serial.print(",\t");*/
     }
-    Serial.println(" ");
+   /* Serial.println(" ");
     Serial.print(prevyaw);
     Serial.print(" , ");
     Serial.print(prevpitch);
     Serial.print(" , ");
     Serial.print(prevroll);
-    Serial.println(" ");
+    Serial.println(" "); */
 //*************************************************************
     ESC1.write(receiver_values[2]);
     ESC2.write(receiver_values[2]);

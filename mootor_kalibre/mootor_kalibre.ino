@@ -26,9 +26,9 @@ void setup() {
   ESC4.write(0);
   delay(2000);
   ESC1.write(85);
-  ESC2.write(85);
-  ESC3.write(85);
-  ESC4.write(85);
+  ESC2.write(90);
+//  ESC3.write(85);
+//  ESC4.write(85);
   delay(2000); 
 //  for(int i=180; i<70; i--) {
 //    ESC.write(i);// Send the signal to the ESC
