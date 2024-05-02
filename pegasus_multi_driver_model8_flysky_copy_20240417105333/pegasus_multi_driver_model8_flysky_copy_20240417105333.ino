@@ -7,9 +7,15 @@
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 #include "Wire.h"
 #endif
-
+#define thermalError 46
+#define chargeError 47
+#define lm35 A8
 #define echo 39
 #define triq 41
+#define sagtek_pwm 10
+#define soltek_pwm 11
+#define enA  12
+#define enB  13
 #define KP_mes 0.80
 #define KI_mes 0.0
 #define KD_mes 150.00
@@ -19,19 +25,20 @@
 #define KP_pitch 0.50
 #define KI_pitch 0.00
 #define KD_pitch 150.00
-#define KP_yaw 0.5
+#define KP_yaw 1.3
 #define KI_yaw 0.00
-#define KD_yaw 0.00
+#define KD_yaw 200.00
 #define IMU_COMMUNICATION_TIMEOUT 1000
 MPU6050 mpu;
 Servo ESC1, ESC2, ESC3, ESC4;
 Servo servo1, servo2, servo3, servo4;
-Servo ontek1, ontek2, arkatek;
 Quaternion q;           // [w, x, y, z]         quaternion container
 VectorInt16 aa;         // [x, y, z]            accel sensor measurements
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
+float sicalik_gerilim = 0;
+int okunan_degerlm35 = 0;
 float hiz ;
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
@@ -46,19 +53,26 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 int16_t * first_sets;
 int16_t * second_sets;
 bool stabil=true;
+float doluluk;
+int okunan_deger =0;
 int receiver_pins[] = {A0, A1, A2, A3, A4, A5};
 long int receiver_values[] = {0, 0, 0, 0, 0, 0};
+int servo_val1=180, servo_val2= 0, servo_val3= 180, servo_val4= 0;
 long int throttle=0, prevyaw=0, prevpitch=0, prevroll=0;
-float mesafe, sure;
+float mesafe, sure, sicalik = 0;
 double  mesError=0, rollError=0, yawError=0, pitchError=0, roll_pid_i, roll_last_error, roll_control_signal, pitch_pid_i, pitch_last_error, pitch_control_signal, yaw_pid_i, yaw_last_error, yaw_control_signal, mes_pid_i, mes_last_error, mes_control_signal;
 int motpower1=0, motpower2=0, motpower3=0, motpower4=0, motpower5=0, motpower6=0;  
-
+int sagtek_val=0, soltek_val=0;
 void mot_calib_setup() {
   Serial.begin(9600);
   pinMode(triq,OUTPUT);
   pinMode(echo,INPUT);
 //  pinMode(thermalError,INPUT);
 //  pinMode(chargeError,INPUT);
+  pinMode(sagtek_pwm, OUTPUT);
+  pinMode(soltek_pwm, OUTPUT);
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
   servo1.attach(2,1000,2000);
   servo2.attach(3,1000,2000);
   servo3.attach(4,1000,2000);
@@ -67,9 +81,6 @@ void mot_calib_setup() {
   ESC2.attach(7,1000,2000);
   ESC3.attach(8,1000,2000);
   ESC4.attach(9,1000,2000);
-  ontek1.attach(11,1000,2000);
-  ontek2.attach(12,1000,2000);
-  arkatek.attach(13,1000,2000);
   Serial.println("esc kalibre basladı...");
 
   servo1.write(0);
@@ -80,24 +91,18 @@ void mot_calib_setup() {
   ESC2.write(180);
   ESC3.write(180);
   ESC4.write(180);
-  ontek1.write(180);
-  ontek2.write(180);
-  arkatek.write(180);
+  
   delay(2000);
   ESC1.write(0);
   ESC2.write(0);
   ESC3.write(0);
   ESC4.write(0); 
-  ontek1.write(0);
-  ontek2.write(0);
-  arkatek.write(0);
-  delay(2000);
   
-  ontek1.write(85);
-  ontek2.write(85);
-  arkatek.write(85);
   delay(3000);
-  Serial.println("esc kalibre bitti");
+  
+
+ 
+  //Serial.println("esc kalibre bitti");
 }
 
 long int rec_ver_transform() {
@@ -130,19 +135,12 @@ long int rec_ver_transform() {
       else if(throttle<0) throttle= 0;
     }
     else {
-      if(prevpitch>3){
-        throttle=map(rec[2],986,1977,85,180);
-        if(throttle<85) throttle=85; if(throttle>180) throttle=180;
+      
+        throttle=map(rec[2],986,1977,0,255);
+        if(throttle<0) throttle=0; if(throttle>255) throttle=255;
        
-      }
-      else if (prevpitch<-3) {
-        throttle=map(rec[2],986,1977,0,85);
-        if(throttle<0) throttle=0; if(throttle>85) throttle=85;
-        
-      }
-      else {
-        ;
-      }
+      
+      
     }  
      
     /*Serial.println(" ");
@@ -304,16 +302,13 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
   Serial.print("Rollerror:");
   Serial.print(rollError);
   Serial.print(",");
-  pitchError = PrPitch - current_Pitch;
-  Serial.print("Pitcherror:");
-  Serial.print(pitchError);
-  Serial.print(","); 
-  //if(rollError==0 && pitchError==0) {
-  //  PrYaw=current_Yaw;
-  //}
    yawError = PrYaw - current_Yaw;
   Serial.print("Yawerror:");
   Serial.print(yawError);
+  Serial.print(","); 
+   pitchError = PrPitch - current_Pitch;
+  Serial.print("Pitcherror:");
+  Serial.print(pitchError);
   Serial.println(" "); 
   mes_control_signal=  getControlSignal(mesError, KP_mes, KI_mes, KD_mes, mes_pid_i, mes_last_error, sure);
   roll_control_signal = getControlSignal(rollError, KP_roll, KI_roll, KD_roll, roll_pid_i, roll_last_error, deltatime);
@@ -353,10 +348,10 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
   Serial.print("mot4:");
   Serial.print(motpower4);
   Serial.println(" "); 
-  ESC1.write(motpower1);
-  ESC2.write(motpower2);
-  ESC3.write(motpower3);
-  ESC4.write(motpower4);
+  ESC1.write(throttle);
+  ESC2.write(throttle);
+  ESC3.write(throttle);
+  ESC4.write(throttle);
 }
 void errorstate(bool imu_error, double pitchError, double rollError) {
   if(throttle>10) {
@@ -387,8 +382,8 @@ void rightleftturning(uint32_t yawturn) {
 			uint32_t now= millis();
 			if(now-lastmillis>incdelay) {
 				lastmillis=now;
-				motpower5=throttle+3;
-				motpower6=throttle-3;
+				soltek_val=throttle+3;
+				sagtek_val=throttle-3;
 				
         /*Serial.print("mot5:");
         Serial.print(motpower5);
@@ -407,8 +402,8 @@ void rightleftturning(uint32_t yawturn) {
 			uint32_t now= millis();
 			if(now-lastmillis>incdelay) {
 				lastmillis=now;
-				motpower5=throttle+3;
-				motpower6=throttle-3;
+				sagtek_val=throttle+3;
+				soltek_val=throttle-3;
 				
         /*Serial.print("mot5:");
         Serial.print(motpower5);
@@ -427,9 +422,9 @@ void landdrivecontrol(float prYaw, struct IMU_Values imu_values){
 		double yawError = prYaw - imu_values.CurrentOrientation.YawAngle;
 		yaw_control_signal =  getControlSignal(yawError, KP_yaw, KI_yaw, KD_yaw, yaw_pid_i, yaw_last_error, imu_values.DeltaTime);
 		yaw_last_error= yawError;
-		motpower5= throttle-yaw_control_signal;
+		sagtek_val= throttle-yaw_control_signal;
 		
-		motpower6= throttle+yaw_control_signal;
+		soltek_val= throttle+yaw_control_signal;
 		
     /*Serial.print("mot1:");
     Serial.print(motpower1);
@@ -446,7 +441,9 @@ void mods(long int kademe, struct IMU_Values imu_values) {
   rec_ver_transform();
   
   mesafe_yer();
-  
+  if(prevroll==0 && prevpitch==0) {
+    prevyaw=imu_values.CurrentOrientation.YawAngle;
+  }
   if (kademe>1700) {
     
     Serial.println("*******MOD1********");
@@ -496,7 +493,7 @@ void setup(){
   initializeIMU();
   delay(2000);
   mot_calib_setup();
-  /*if(digitalRead(thermalError)==1 || digitalRead(chargeError)==1) {
+/*  if(digitalRead(thermalError)==1 || digitalRead(chargeError)==1) {
     ESC1.write(85);
     ESC2.write(0);
     ESC3.write(0);
@@ -512,7 +509,7 @@ void setup(){
     }
     else 
       ;
-  } */
+  }*/
 }
 
 void loop() {
@@ -546,14 +543,13 @@ void loop() {
     if(digitalRead(chargeError)==1) {
       Serial.println("Batarya da enerji yok kapatin!");
     }
-  }
-  else {*/
+  } */
+  
     if( receiver_values[4]<1500) {
         //Serial.println("Uçuşa geçildi");
         
-          ontek1.write(85);
-          ontek2.write(85);
-          arkatek.write(85);
+          digitalWrite(enA, LOW);
+          digitalWrite(enB, LOW);
           servo1.write(0);
           servo2.write(180);
           servo3.write(0);
@@ -570,11 +566,14 @@ void loop() {
           ESC2.write(0);
           ESC3.write(0);
           ESC4.write(0);
-          servo1.write(180);
+          /*servo1.write(180);
           servo2.write(0);
           servo3.write(180);
-          servo4.write(0);
-          
+          servo4.write(0);*/
+          servo1.write(0);
+          servo2.write(180);
+          servo3.write(0);
+          servo4.write(180);
         
       
       
@@ -588,9 +587,10 @@ void loop() {
           ESC3.write(0);
           ESC4.write(0);
           
-          ontek1.write(motpower5);
-          ontek2.write(motpower6);
-          arkatek.write(throttle);
+          analogWrite(sagtek_pwm, sagtek_val);
+          analogWrite(soltek_pwm, soltek_val);
+          digitalWrite(enA, HIGH);
+          digitalWrite(enB, LOW);
         }
         else if(prevpitch<-3){ 
           
@@ -606,14 +606,14 @@ void loop() {
           Serial.print("mot6:");
           Serial.print(85 - motpower6);
           Serial.println(" "); */
-          ontek1.write(85 - motpower5);
-          ontek2.write(85 - motpower6);
-          arkatek.write(85 - throttle);
+          analogWrite(sagtek_pwm, sagtek_val);
+          analogWrite(soltek_pwm, soltek_val);
+          digitalWrite(enA, LOW);
+          digitalWrite(enB, HIGH);
         }
         else {
-          ontek1.write(85);
-          ontek2.write(85);
-          arkatek.write(85);
+          digitalWrite(enA, LOW);
+          digitalWrite(enB, LOW);
           
         }
 		  }
@@ -625,9 +625,10 @@ void loop() {
           ESC3.write(0);
           ESC4.write(0);
           
-          ontek1.write(motpower5);
-          ontek2.write(motpower6);
-          arkatek.write(throttle);
+          analogWrite(sagtek_pwm, sagtek_val);
+          analogWrite(soltek_pwm, soltek_val);
+          digitalWrite(enA, LOW);
+          digitalWrite(enB, HIGH);
         }
         else if(prevpitch<-3){
           rightleftturning(prevyaw);
@@ -636,14 +637,14 @@ void loop() {
           ESC3.write(0);
           ESC4.write(0);
           
-          ontek1.write(85 - motpower5);
-          ontek2.write(85 - motpower6);
-          arkatek.write(85 - throttle);
+          analogWrite(sagtek_pwm, sagtek_val);
+          analogWrite(soltek_pwm, soltek_val);
+          digitalWrite(enA, HIGH);
+          digitalWrite(enB, LOW);
         }
         else {
-          ontek1.write(85);
-          ontek2.write(85);
-          arkatek.write(85);
+          digitalWrite(enA, LOW);
+          digitalWrite(enB, LOW);
         }  
       }
     }
