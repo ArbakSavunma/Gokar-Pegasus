@@ -13,15 +13,15 @@
 #define KP_mes 0.80
 #define KI_mes 0.0
 #define KD_mes 150.00
-#define KP_roll 0.5
+#define KP_roll 1
 #define KI_roll 0.00
-#define KD_roll 200.00
-#define KP_pitch 0.50
-#define KI_pitch 0.00
-#define KD_pitch 150.00
-#define KP_yaw 0.5
-#define KI_yaw 0.00
-#define KD_yaw 0.00
+#define KD_roll 2000
+#define KP_pitch 20
+#define KI_pitch 0.00000
+#define KD_pitch 3000
+#define KP_yaw 10
+#define KI_yaw 0.0
+#define KD_yaw 2000
 #define IMU_COMMUNICATION_TIMEOUT 1000
 MPU6050 mpu;
 Servo ESC1, ESC2, ESC3, ESC4;
@@ -145,7 +145,7 @@ long int rec_ver_transform() {
       }
     }  
      
-    /*Serial.println(" ");
+    /*Serial.print("                                                                                                           ");
     Serial.print(prevyaw);
     Serial.print(" , ");
     Serial.print(prevpitch);
@@ -154,7 +154,7 @@ long int rec_ver_transform() {
     Serial.print(" , ");
     Serial.print(throttle);    
     Serial.println(" ");  */
-  return prevyaw, prevpitch, prevroll, throttle;
+  //return prevyaw, prevpitch, prevroll, throttle;
 }
 
 void resetPidVariables() {
@@ -296,11 +296,11 @@ double getControlSignal(double error, double kp, double ki, double kd, double& p
 }
 
 int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrYaw, double current_Roll, double current_Yaw, double current_Pitch, unsigned long deltatime) {
-   mesError= irtifa - uzaklik;
+  mesError= irtifa - uzaklik;
   Serial.print("                                 mesaferror:");
   Serial.print(mesError);
   Serial.print(","); 
-   rollError = PrRoll - current_Roll;
+  rollError = PrRoll - current_Roll;
   Serial.print("Rollerror:");
   Serial.print(rollError);
   Serial.print(",");
@@ -311,7 +311,7 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
   //if(rollError==0 && pitchError==0) {
   //  PrYaw=current_Yaw;
   //}
-   yawError = PrYaw - current_Yaw;
+  yawError = PrYaw - current_Yaw;
   Serial.print("Yawerror:");
   Serial.print(yawError);
   Serial.println(" "); 
@@ -322,19 +322,19 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
  
  
   motpower1 = throttle + mes_control_signal - roll_control_signal - yaw_control_signal - pitch_control_signal;
-  if(motpower1<0) motpower1=0;
+  if(motpower1<20) motpower1=20;
   if(motpower1>180) motpower1=180;
   //motpower1 = map(motpower1,0,180,85,180);
   //if(motpower1<85) motpower1=85;
   //if(motpower1>180) motpower1=180;
   motpower2 = throttle + mes_control_signal + roll_control_signal + yaw_control_signal - pitch_control_signal;
-  if(motpower2<0) motpower2=0;
+  if(motpower2<20) motpower2=20;
   if(motpower2>180) motpower2=180;
   motpower3 = throttle + mes_control_signal + roll_control_signal - yaw_control_signal + pitch_control_signal;
-  if(motpower3<0) motpower3=0;
+  if(motpower3<20) motpower3=20;
   if(motpower3>180) motpower3=180;
   motpower4 = throttle + mes_control_signal - roll_control_signal + yaw_control_signal + pitch_control_signal;
-  if(motpower4<0) motpower4=0;
+  if(motpower4<20) motpower4=20;
   if(motpower4>180) motpower4=180;
   if(throttle<10){
     motpower1=0; motpower2=0; motpower3=0; motpower4=0;
@@ -360,18 +360,61 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
 }
 void errorstate(bool imu_error, double pitchError, double rollError) {
   if(throttle>10) {
-    if( imu_error || pitchError>40 || rollError>40 || pitchError<-40 || rollError<-40) {
+    if(prevroll!=0) {
+      if( imu_error || rollError>60 || rollError<-60) {
 
-        resetPidVariables();
-        Serial.println(imu_error);
-        while (1) {
-          ESC1.write(0);
-          ESC2.write(0);
-          ESC3.write(0);
-          ESC4.write(0);
-          
-        } 
-        return 0;
+          resetPidVariables();
+          Serial.println(imu_error);
+          while (1) {
+            ESC1.write(0);
+            ESC2.write(0);
+            ESC3.write(0);
+            ESC4.write(0);
+            
+          }    
+      }
+    }
+    else {
+      if( imu_error || rollError>40 || rollError<-40) {
+
+          resetPidVariables();
+          Serial.println(imu_error);
+          while (1) {
+            ESC1.write(0);
+            ESC2.write(0);
+            ESC3.write(0);
+            ESC4.write(0);
+            
+          }    
+      }
+    }
+    if(prevpitch!=0) {
+      if( imu_error || pitchError>60 || pitchError<-60) {
+
+          resetPidVariables();
+          Serial.println(imu_error);
+          while (1) {
+            ESC1.write(0);
+            ESC2.write(0);
+            ESC3.write(0);
+            ESC4.write(0);
+            
+          }    
+      }
+    }
+    else {
+      if( imu_error || pitchError>40 || rollError<-40) {
+
+          resetPidVariables();
+          Serial.println(imu_error);
+          while (1) {
+            ESC1.write(0);
+            ESC2.write(0);
+            ESC3.write(0);
+            ESC4.write(0);
+            
+          }    
+      }
     }
   }
 }
@@ -456,12 +499,12 @@ void mods(long int kademe, struct IMU_Values imu_values) {
   }
   else if(kademe<1700 && kademe>1200) {
     Serial.println("*******MOD2********");
-    calculateMotorPowers(100,mesafe,prevroll,-1 * prevpitch,-1 * prevyaw, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
+    calculateMotorPowers(100,mesafe,-1*prevroll,prevpitch, prevyaw, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
     errorstate(imu_values.Error, pitchError, rollError);
   }
   else if(kademe<1200) {
     Serial.println("*******MOD3********");
-    calculateMotorPowers(0,0,prevroll,-1 * prevpitch,-1 * prevyaw, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
+    calculateMotorPowers(0,0,-1*prevroll, prevpitch, prevyaw, imu_values.CurrentOrientation.RollAngle,imu_values.CurrentOrientation.YawAngle,imu_values.CurrentOrientation.PitchAngle,imu_values.DeltaTime);
     
     errorstate(imu_values.Error, pitchError, rollError);
   }
@@ -555,9 +598,9 @@ void loop() {
           ontek2.write(85);
           arkatek.write(85);
           servo1.write(0);
-          servo2.write(180);
-          servo3.write(0);
-          servo4.write(180); 
+          servo2.write(165);
+          servo3.write(5);
+          servo4.write(160); 
           
            
         mods(receiver_values[5],imuValues);
