@@ -13,15 +13,9 @@
 #define KP_mes 0.80
 #define KI_mes 0.0
 #define KD_mes 150.00
-#define KP_roll 1
-#define KI_roll 0.00
-#define KD_roll 2000
-#define KP_pitch 20
-#define KI_pitch 0.00000
-#define KD_pitch 3000
-#define KP_yaw 10
-#define KI_yaw 0.0
-#define KD_yaw 2000
+int KP_roll =6, KI_roll = 0, KD_roll = 4000;
+int KP_pitch = 3, KI_pitch = 0, KD_pitch = 2000;
+int KP_yaw = 8, KI_yaw = 0.01, KD_yaw = 2500;
 #define IMU_COMMUNICATION_TIMEOUT 1000
 MPU6050 mpu;
 Servo ESC1, ESC2, ESC3, ESC4;
@@ -315,6 +309,10 @@ int calculateMotorPowers(int irtifa,int uzaklik,int PrRoll, int PrPitch, int PrY
   Serial.print("Yawerror:");
   Serial.print(yawError);
   Serial.println(" "); 
+  if(yawError<1 && yawError>-1)  yawError=0;
+  if(rollError<1 && rollError>-1)  rollError=0;
+  if(pitchError<1 && pitchError>-1)  pitchError=0;
+  
   mes_control_signal=  getControlSignal(mesError, KP_mes, KI_mes, KD_mes, mes_pid_i, mes_last_error, sure);
   roll_control_signal = getControlSignal(rollError, KP_roll, KI_roll, KD_roll, roll_pid_i, roll_last_error, deltatime);
   pitch_control_signal = getControlSignal(pitchError, KP_pitch, KI_pitch, KD_pitch, pitch_pid_i, pitch_last_error, deltatime);
@@ -573,7 +571,7 @@ void loop() {
   Serial.println(); */
   rec_ver_transform();
 
-
+  Serial.println(imuValues.DeltaTime);
   /*if(digitalRead(thermalError)==1 || digitalRead(chargeError)==1) {
     
     while (mesafe>2) {
