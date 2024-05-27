@@ -73,16 +73,16 @@ void mot_calib_setup() {
 long int rec_ver_transform() {
     for(int i=0; i<3; i++) {
       receiver_values[i]=pulseIn (receiver_pins[i], HIGH, 40000);
-      Serial.print(" ");
+      /*Serial.print(" ");
       Serial.print(receiver_values[i]);
-      Serial.print(" , "); 
+      Serial.print(" , "); */
     }
-    Serial.println(" ");
+    //Serial.println(" ");
     long int rec[]= { receiver_values[0], receiver_values[1], receiver_values[2]};    
     prevpitch=map(rec[1],1000,2000,-20,20);
     if(prevpitch<5 && prevpitch>-5) prevpitch=0;
 
-    prevyaw=map(rec[2],1000,2000,-20,20);
+    prevyaw=-1*(map(rec[2],1000,2000,-20,20));
     //prevyaw=0;
     if(prevyaw<5 && prevyaw>-5) prevyaw=0; 
     if(prevpitch>5){
@@ -263,71 +263,92 @@ void errorstate(bool imu_error, double pitchError, double rollError) {
   }
 }
 void rightleftturning(uint32_t yawturn) {
-  Serial.println("                                                                     sag sol yapıyo");
+ int incdelay;
 	if(receiver_values[0]>1500) {
-		int incdelay;
+		
 		if(yawturn>=3){
-			if(yawturn>=3 || yawturn<6) incdelay=400;
-			else if(yawturn>=6 || yawturn<10) incdelay=300;
-			else if(yawturn>=10 || yawturn<13) incdelay=200;
-			else if(yawturn>=13 || yawturn<17) incdelay=100;
-			else incdelay=40;
-			uint32_t now= millis();
-			if(now-lastmillis>incdelay) {
-				lastmillis=now;
-				soltek_val=throttle+3;
-				sagtek_val=throttle-3;
-				
-        Serial.print("mot5:");
+      Serial.println("                                                      sola gidiyor");
+			if(yawturn>=3 && yawturn<6) incdelay=10;
+			else if(yawturn>=6 && yawturn<10) incdelay=30;
+			else if(yawturn>=10 && yawturn<13) incdelay=60;
+			else  incdelay=100;
+		
+		
+				soltek_val=throttle+incdelay;
+				sagtek_val=throttle-incdelay;
+        if(soltek_val>255) soltek_val=255; if(soltek_val<0) soltek_val=0;
+        if(sagtek_val>255) sagtek_val=255; if(sagtek_val<0) sagtek_val=0;
+				analogWrite(sagtek_pwm, sagtek_val);
+        analogWrite(soltek_pwm, soltek_val);
+        Serial.print("soltek_val:");
         Serial.print(soltek_val);
         Serial.println(" ");
-        Serial.print("mot5:");
+        Serial.print("sagtek_val:");
         Serial.print(sagtek_val);
         Serial.println(" "); 
-			}
+			
 		}
 		else if(yawturn<=-3){
-			if(yawturn<=-3 || yawturn>-6) incdelay=400;
-			else if(yawturn<=-6 || yawturn>-10) incdelay=300;
-			else if(yawturn<=-10 || yawturn>-13) incdelay=200;
-			else if(yawturn<=-13 || yawturn>-17) incdelay=100;
-			else incdelay=40;
-			uint32_t now= millis();
-			if(now-lastmillis>incdelay) {
-				lastmillis=now;
-				sagtek_val=throttle+3;
-				soltek_val=throttle-3;
-				
-         Serial.print("                                       mot5:");
+      Serial.println("                                                      saga gidiyor");
+			if(yawturn<=-3 && yawturn>-6) incdelay=10;
+			else if(yawturn<=-6 && yawturn>-10) incdelay=30;
+			else if(yawturn<=-10 && yawturn>-13) incdelay=60;
+			else  incdelay=100;
+
+			
+			
+				sagtek_val=throttle+incdelay;
+				soltek_val=throttle-incdelay;
+        if(soltek_val>255) soltek_val=255; if(soltek_val<0) soltek_val=0;
+        if(sagtek_val>255) sagtek_val=255; if(sagtek_val<0) sagtek_val=0;
+				analogWrite(sagtek_pwm, sagtek_val);
+        analogWrite(soltek_pwm, soltek_val);
+        Serial.print("                                       soltek_val:");
         Serial.print(soltek_val);
         Serial.println(" ");
-        Serial.print("mot5:");
+        Serial.print("sagtek_val:");
         Serial.print(sagtek_val);
         Serial.println(" "); 
-			}
+			
 		}
-	}
+	
+  }
+  else {
+    analogWrite(sagtek_pwm, 0);
+    analogWrite(soltek_pwm, 0);
+    digitalWrite(enA, LOW);
+    digitalWrite(enB, LOW);
+  }
 }
 
-void landdrivecontrol(float prYaw, struct IMU_Values imu_values){
+void landdrivecontrol(float prYaw, int imu_values){
 
 	if(receiver_values[0]>1500) {
-		double yawError = prYaw - imu_values.CurrentOrientation.YawAngle;
-		yaw_control_signal =  getControlSignal(yawError, KP_yaw, KI_yaw, KD_yaw, yaw_pid_i, yaw_last_error, imu_values.DeltaTime);
-		yaw_last_error= yawError;
+		//double yawError = prYaw - imu_values;
+    //Serial.println(yawError);
+		//yaw_control_signal =  getControlSignal(yawError, KP_yaw, KI_yaw, KD_yaw, yaw_pid_i, yaw_last_error, imu_values.DeltaTime);
+		//yaw_last_error= yawError;
     
-		sagtek_val= throttle-yaw_control_signal;
-		
-		soltek_val= throttle+yaw_control_signal;
-		
-    /*Serial.print("mot1:");
-    Serial.print(motpower1);
+		sagtek_val= throttle;
+		if(sagtek_val>255) sagtek_val=255; if(sagtek_val<0) sagtek_val=0;
+		soltek_val= throttle;
+		if(soltek_val>255) soltek_val=255; if(soltek_val<0) soltek_val=0;
+    analogWrite(sagtek_pwm, sagtek_val);
+    analogWrite(soltek_pwm, soltek_val);
+    Serial.print("mot1:");
+    Serial.print(sagtek_val);
     Serial.println(" ");
     Serial.print("mot2:");
-    Serial.print(motpower2);
-    Serial.println(" "); */
+    Serial.print(soltek_val);
+    Serial.println(" "); 
 		
 	}
+  else {
+    analogWrite(sagtek_pwm, 0);
+    analogWrite(soltek_pwm, 0);
+    digitalWrite(enA, LOW);
+    digitalWrite(enB, LOW);
+  }
 }
 
 
@@ -355,14 +376,14 @@ float mesafe_yer() {
 }
 
 void setup(){
-  initializeIMU();
+  //initializeIMU();
   delay(2000);
   mot_calib_setup();
 
 }
 
 void loop() {
-  struct IMU_Values imuValues = GetIMU_Values();
+  //struct IMU_Values imuValues = GetIMU_Values();
   /*Serial.print("Yaw:");
   Serial.print(imuValues.CurrentOrientation.YawAngle);
   Serial.print(",");
@@ -381,10 +402,10 @@ void loop() {
   
     if( receiver_values[0]<1500) {
         Serial.println("Uçuşa geçildi");
-          analogWrite(sagtek_pwm, 0);
-          analogWrite(soltek_pwm, 0);
           digitalWrite(enA, LOW);
           digitalWrite(enB, LOW);
+          analogWrite(sagtek_pwm, 0);
+          analogWrite(soltek_pwm, 0);
           
     }
            
@@ -398,24 +419,23 @@ void loop() {
         Serial.println("burada1");
         if(prevpitch>3){
           
-          prevyaw=imuValues.CurrentOrientation.YawAngle;
-          landdrivecontrol(prevyaw,imuValues);
+          //prevyaw=imuValues.CurrentOrientation.YawAngle;
           
-          
-          analogWrite(sagtek_pwm, sagtek_val);
-          analogWrite(soltek_pwm, soltek_val);
           digitalWrite(enA, HIGH);
           digitalWrite(enB, LOW);
+          landdrivecontrol(0,0);
+          
+          
         }
         else if(prevpitch<-3){ 
           
-          prevyaw=imuValues.CurrentOrientation.YawAngle;
-          landdrivecontrol(prevyaw,imuValues);
-       
-          analogWrite(sagtek_pwm, sagtek_val);
-          analogWrite(soltek_pwm, soltek_val);
+          //prevyaw=imuValues.CurrentOrientation.YawAngle;
           digitalWrite(enA, LOW);
           digitalWrite(enB, HIGH);
+          landdrivecontrol(0,0);
+          
+          
+          
         }
         else {
           digitalWrite(enA, LOW);
@@ -425,22 +445,16 @@ void loop() {
 		  }
 		  else {
         if(prevpitch>3){
-          rightleftturning(-1 * prevyaw);
-        
-          
-          analogWrite(sagtek_pwm, sagtek_val);
-          analogWrite(soltek_pwm, soltek_val);
-          digitalWrite(enA, LOW);
-          digitalWrite(enB, HIGH);
-        }
-        else if(prevpitch<-3){
-          rightleftturning(prevyaw);
-         
-          
-          analogWrite(sagtek_pwm, sagtek_val);
-          analogWrite(soltek_pwm, soltek_val);
           digitalWrite(enA, HIGH);
           digitalWrite(enB, LOW);
+          
+          rightleftturning(prevyaw);
+        }
+        else if(prevpitch<-3){
+          digitalWrite(enA, LOW);
+          digitalWrite(enB, HIGH);
+         
+          rightleftturning(prevyaw);
         }
         else {
           digitalWrite(enA, LOW);
